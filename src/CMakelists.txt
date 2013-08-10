@@ -1,0 +1,10 @@
+if (WIN32)
+    set(LIBS glfw3 glew32 opengl32 DevIL)
+endif (WIN32)
+
+add_executable(editor editor.c map.c sf.c sf_window.c sf_frame.c sf_texture.c)
+
+set_target_properties(editor PROPERTIES RUNTIME_OUTPUT_DIRECTORY
+    ${PROJECT_SOURCE_DIR}/bin)
+
+target_link_libraries(editor ${LIBS})
