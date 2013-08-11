@@ -8,14 +8,18 @@
 
 static void tile_draw(struct tile *tile, int x, int y) {
     struct sf_frame f;
-    int w, h;
+    int col, row;
 
-    w = tile->n % tile->ts->w;
-    h = tile->n / tile->ts->h;
+    if (tile->ts->texture == NULL) {
+        return;
+    }
 
-    f.texture = tile->ts->tex;
-    f.rect.x = w * tile->ts->tw;
-    f.rect.y = h * tile->ts->th;
+    col = tile->n % tile->ts->col;
+    row = tile->n / tile->ts->col;
+
+    f.texture = tile->ts->texture;
+    f.rect.x = col * tile->ts->tw;
+    f.rect.y = row * tile->ts->th;
     f.rect.w = tile->ts->tw;
     f.rect.h = tile->ts->th;
 
@@ -25,17 +29,18 @@ static void tile_draw(struct tile *tile, int x, int y) {
 
 static void tileset_load(struct tileset *ts,
                          const char *pathname, int tw, int th) {
-    ts->tex = sf_texture_load(pathname);
+    ts->texture = sf_texture_load(pathname);
     ts->pathname = malloc(strlen(pathname) + 1);
     strcpy(ts->pathname, pathname);
     ts->tw = tw;
     ts->th = th;
-    ts->w = ts->tex->w / ts->tw;
-    ts->h = ts->tex->h / ts->th;
+    ts->col = ts->texture->w / ts->tw;
+    ts->row = ts->texture->h / ts->th;
 }
 
 
-struct map *map_create(const char *pathname, int w, int h, int tw, int th) {
+struct map *map_create(const char *pathname, int col, int row,
+                                             int tw, int th) {
     struct map *m;
 
     m = malloc(sizeof(*m));
@@ -43,11 +48,11 @@ struct map *map_create(const char *pathname, int w, int h, int tw, int th) {
     strcpy(m->pathname, pathname);
     m->nts = 0;
     m->tss = calloc(MAP_MAX_TILESETS, sizeof(*m->tss));
-    m->w = w;
-    m->h = h;
+    m->col = col;
+    m->row = row;
     m->tw = tw;
     m->th = th;
-    m->ntile = w * h;
+    m->ntile = col * row;
     m->tiles = calloc(m->ntile, sizeof(*m->tiles));
 
     return m;
@@ -73,8 +78,8 @@ struct map *map_load(const char *pathname) {
     /* map properties */
     fread(&m->tw, sizeof(m->tw), 1, f);
     fread(&m->th, sizeof(m->th), 1, f);
-    fread(&m->w, sizeof(m->w), 1, f);
-    fread(&m->h, sizeof(m->h), 1, f);
+    fread(&m->col, sizeof(m->col), 1, f);
+    fread(&m->row, sizeof(m->row), 1, f);
     /* tilesets */
     fread(&m->nts, sizeof(m->nts), 1, f);
     m->tss = calloc(m->nts, sizeof(*m->tss));
@@ -117,12 +122,12 @@ void map_save(const struct map *m) {
     /* map properties */
     fwrite(&m->tw, sizeof(m->tw), 1, f);
     fwrite(&m->th, sizeof(m->th), 1, f);
-    fwrite(&m->w, sizeof(m->w), 1, f);
-    fwrite(&m->h, sizeof(m->h), 1, f);
+    fwrite(&m->col, sizeof(m->col), 1, f);
+    fwrite(&m->row, sizeof(m->row), 1, f);
     /* tilesets */
     fwrite(&m->nts, sizeof(m->nts), 1, f);
     for (i = 0; i < m->nts; ++i) {
-        if (m->tss[i].tex == NULL) {
+        if (m->tss[i].texture == NULL) {
             continue;
         }
         fwrite(m->tss[i].pathname, sizeof(char),
@@ -153,24 +158,29 @@ void map_set_tileset(struct map *m, int its,
     return tileset_load(m->tss + its, pathname, tw, th);
 }
 
-void map_set_tile(struct map *m, int x, int y, int its, int n) {
+void map_set_tile(struct map *m, int col, int row, int its, int n) {
+    int i;
     struct tile *tile;
 
-    tile = m->tiles + (y + x * m->w);
+    i = row * m->col + col;
+    if (i >= m->ntile) {
+        return;
+    }
+    tile = m->tiles + i;
     tile->its = its;
     tile->ts = m->tss + its;
     tile->n = n;
 }
 
-void map_draw(const struct map *m) {
-    int w, h;
+void map_draw(const struct map *m, int x, int y) {
+    int col, row;
     struct tile *tile;
 
     tile = m->tiles;
-    for (h = 0; h < m->h; ++h) {
-        for (w = 0; w < m->w; ++w, ++tile) {
+    for (row = 0; row < m->row; ++row) {
+        for (col = 0; col < m->col; ++col, ++tile) {
             if (tile->ts != NULL) {
-                tile_draw(tile, w * m->tw, h * m->th);
+                tile_draw(tile, x + col * m->tw, y + row * m->th);
             }
         }
     }

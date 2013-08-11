@@ -17,4 +17,7 @@ struct sf_rect {
 };
 
 
+int sf_rect_iscontain(struct sf_rect *r, int x, int y);
+
+
 #endif /* SF_RECT_H */
