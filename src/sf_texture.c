@@ -111,7 +111,7 @@ void sf_texture_draw_alpha(const struct sf_texture *tex,
 
     glColor4f(1.0f, 1.0f, 1.0f, alpha);
 
-    glLoadIdentity();
+    glPushMatrix();
     glTranslatef(x, y, 0.0f);
 
     glBindTexture(GL_TEXTURE_2D, tex->tid);
@@ -122,5 +122,6 @@ void sf_texture_draw_alpha(const struct sf_texture *tex,
         glTexCoord2f(0.0f, 1.0f); glVertex2f(0.0f, tex->h);
     glEnd();
     glBindTexture(GL_TEXTURE_2D, 0);
+    glPopMatrix();
 }
 

@@ -8,8 +8,7 @@ struct sf_window *sf_window_create(const char *title, int w, int h) {
     struct sf_window *win;
 
     win = malloc(sizeof(*win));
-    win->title = malloc(strlen(title) + 1);
-    strcpy(win->title, title);
+    win->title = strdup(title);
     win->w = w;
     win->h = h;
 

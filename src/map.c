@@ -30,8 +30,7 @@ static void tile_draw(struct tile *tile, int x, int y) {
 static void tileset_load(struct tileset *ts,
                          const char *pathname, int tw, int th) {
     ts->texture = sf_texture_load(pathname);
-    ts->pathname = malloc(strlen(pathname) + 1);
-    strcpy(ts->pathname, pathname);
+    ts->pathname = strdup(pathname);
     ts->tw = tw;
     ts->th = th;
     ts->col = ts->texture->w / ts->tw;
@@ -44,8 +43,7 @@ struct map *map_create(const char *pathname, int col, int row,
     struct map *m;
 
     m = malloc(sizeof(*m));
-    m->pathname = malloc(strlen(pathname) + 1);
-    strcpy(m->pathname, pathname);
+    m->pathname = strdup(pathname);
     m->nts = 0;
     m->tss = calloc(MAP_MAX_TILESETS, sizeof(*m->tss));
     m->col = col;
@@ -73,8 +71,7 @@ struct map *map_load(const char *pathname) {
     while (*ptr) {
         fread(++ptr, sizeof(char), 1, f);
     }
-    m->pathname = malloc(strlen(buf) + 1);
-    strcpy(m->pathname, buf);
+    m->pathname = strdup(buf);
     /* map properties */
     fread(&m->tw, sizeof(m->tw), 1, f);
     fread(&m->th, sizeof(m->th), 1, f);

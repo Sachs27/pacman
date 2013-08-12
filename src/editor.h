@@ -4,6 +4,7 @@
 
 #include "sf_rect.h"
 #include "sf_window.h"
+#include "ui_window.h"
 #include "map.h"
 
 
@@ -20,11 +21,11 @@ struct mouse_button {
 struct editor {
     struct sf_window   *window;
     struct map         *map;
-    struct sf_rect      map_rect;
+    struct ui_window   *map_window;
 
     struct tileset     *ts;
-    struct sf_rect      ts_rect;
-    int                 ts_col;
+    struct ui_window   *ts_window;
+    int                 ts_col;     /* selected tile */
     int                 ts_row;
     int                 ts_n;
 
@@ -34,8 +35,6 @@ struct editor {
         struct mouse_button lb;
     } mouse;
 };
-
-extern struct editor editor;
 
 
 #endif /* EDITOR_H */

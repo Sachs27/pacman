@@ -23,7 +23,7 @@ void sf_frame_draw_alpha(struct sf_frame *frame, GLfloat x, GLfloat y,
 
     glColor4f(1.0f, 1.0f, 1.0f, alpha);
 
-    glLoadIdentity();
+    glPushMatrix();
     glTranslatef(x, y, 0.0f);
 
     left = frame->rect.x * 1.0f / frame->texture->w;
@@ -39,4 +39,5 @@ void sf_frame_draw_alpha(struct sf_frame *frame, GLfloat x, GLfloat y,
         glTexCoord2f(left, bottom); glVertex2f(0.0f, frame->rect.h);
     glEnd();
     glBindTexture(GL_TEXTURE_2D, 0);
+    glPopMatrix();
 }
