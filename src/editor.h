@@ -4,12 +4,12 @@
 
 #include "sf_rect.h"
 #include "sf_window.h"
-#include "ui_window.h"
+#include "ui.h"
 #include "map.h"
 
 
 #define EDITOR_WINDOW_W 800
-#define EDITOR_WINDOW_H 528
+#define EDITOR_WINDOW_H 537
 
 
 struct mouse_button {
@@ -20,14 +20,21 @@ struct mouse_button {
 
 struct editor {
     struct sf_window   *window;
+
     struct map         *map;
-    struct ui_window   *map_window;
+    struct ui          *map_window;
 
     struct tileset     *ts;
-    struct ui_window   *ts_window;
+    struct ui          *ts_window;
     int                 ts_col;     /* selected tile */
     int                 ts_row;
     int                 ts_n;
+
+    struct ui          *bt_create;
+    struct ui          *bt_destroy;
+    struct ui          *bt_prev;
+    struct ui          *bt_next;
+    struct ui          *bt_save;
 
     struct {
         int x;

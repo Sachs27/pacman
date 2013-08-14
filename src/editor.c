@@ -72,11 +72,11 @@ static int init_gl(void) {
     return 0;
 }
 
-static void map_window_on_render(struct ui_window *w);
-static void map_window_on_click(struct ui_window *w, int x, int y);
+static void map_window_on_render(struct ui *w);
+static void map_window_on_click(struct ui *w, int x, int y);
 
-static void ts_window_on_render(struct ui_window *w);
-static void ts_window_on_click(struct ui_window *w, int x, int y);
+static void ts_window_on_render(struct ui *w);
+static void ts_window_on_click(struct ui *w, int x, int y);
 
 static void editor_init(void) {
     editor.window = sf_window_create("Pacman - Map Editor",
@@ -87,29 +87,44 @@ static void editor_init(void) {
 
     init_gl();
 
+    editor.bt_create = ui_create(0, 0, 40, 40);
+    ui_set_background(editor.bt_create, sf_texture_load("data/textures/create.png"));
+
+    editor.bt_destroy = ui_create(40, 0, 40, 40);
+    ui_set_background(editor.bt_destroy, sf_texture_load("data/textures/destroy.png"));
+
+    editor.bt_prev = ui_create(80, 0, 40, 40);
+    ui_set_background(editor.bt_prev, sf_texture_load("data/textures/prev.png"));
+
+    editor.bt_next = ui_create(120, 0, 40, 40);
+    ui_set_background(editor.bt_next, sf_texture_load("data/textures/next.png"));
+
+    editor.bt_save = ui_create(160, 0, 40, 40);
+    ui_set_background(editor.bt_save, sf_texture_load("data/textures/save.png"));
+
     editor.map = map_create("data/maps/classic",
                             PACMAN_MAP_COL, PACMAN_MAP_ROW,
                             PACMAN_MAP_TW, PACMAN_MAP_TH);
     map_set_tileset(editor.map, 0, "data/textures/walls.png", 16, 16);
 
-    editor.map_window = ui_window_create("map", &(struct sf_rect) {
-        16, 16,
-        editor.map->col * editor.map->tw, editor.map->row * editor.map->th
-    });
-    editor.map_window->on_render = map_window_on_render;
-    editor.map_window->on_click = map_window_on_click;
+    editor.map_window = ui_create(1, 40, editor.map->col * editor.map->tw,
+                                  editor.map->row * editor.map->th);
+    ui_on_render(editor.map_window, map_window_on_render);
+    ui_on_click(editor.map_window, map_window_on_click);
 
     editor.ts = editor.map->tss;
-    editor.ts_window = ui_window_create("tileset", &(struct sf_rect) {
-        editor.map_window->rect.x + editor.map_window->rect.w + 16,
-        editor.map_window->rect.y,
-        editor.map->tss->texture->w, editor.map->tss->texture->h,
-    });
-    editor.ts_window->on_render = ts_window_on_render;
-    editor.ts_window->on_click = ts_window_on_click;
+    editor.ts_window = ui_create(editor.map_window->area.x
+                                 + editor.map_window->area.w + 16,
+                                 editor.map_window->area.y,
+                                 editor.map->tss->texture->w,
+                                 editor.map->tss->texture->h);
+    ui_set_background(editor.ts_window, editor.map->tss->texture);
+    ui_on_render(editor.ts_window, ts_window_on_render);
+    ui_on_click(editor.ts_window, ts_window_on_click);
     editor.ts_col = 0;
     editor.ts_row = 0;
     editor.ts_n = 0;
+
 }
 
 static void drawline(GLfloat size,
@@ -148,12 +163,12 @@ static int get_tileset_its(void) {
     return -1;
 }
 
-static void draw_base_lines(struct ui_window *w) {
+static void draw_base_lines(struct ui *w) {
     struct map *m = editor.map;
     int i, xmax, ymax;
 
-    xmax = w->rect.w;
-    ymax = w->rect.h;
+    xmax = w->area.w;
+    ymax = w->area.h;
 
     glColor3f(0.0f, 0.0f, 0.0f);
     for (i = 0; i <= m->row; ++i) {
@@ -164,12 +179,12 @@ static void draw_base_lines(struct ui_window *w) {
     }
 }
 
-static void map_window_on_render(struct ui_window *w) {
+static void map_window_on_render(struct ui *w) {
     draw_base_lines(w);
     map_draw(editor.map, 0.0f, 0.0f);
 }
 
-static void map_window_on_click(struct ui_window *w, int x, int y) {
+static void map_window_on_click(struct ui *w, int x, int y) {
     int col, row;
 
     col = x / editor.map->tw;
@@ -178,8 +193,7 @@ static void map_window_on_click(struct ui_window *w, int x, int y) {
     map_set_tile(editor.map, col, row, get_tileset_its(), editor.ts_n);
 }
 
-static void ts_window_on_render(struct ui_window *w) {
-    sf_texture_draw(editor.map->tss->texture, 0.0f, 0.0f);
+static void ts_window_on_render(struct ui *w) {
     /* draw tileset hint */ {
         int x, y;
 
@@ -187,30 +201,31 @@ static void ts_window_on_render(struct ui_window *w) {
         y = editor.ts_row * editor.ts->th;
         glColor3f(1.0f, 0.0f, 0.0f);
         drawline(1.0f, x, y, x + editor.ts->tw, y + editor.ts->th);
+        drawline(1.0f, x + editor.ts->tw, y, x, y + editor.ts->th);
     }
 }
 
-static void ts_window_on_click(struct ui_window *w, int x, int y) {
+static void ts_window_on_click(struct ui *w, int x, int y) {
     editor.ts_col = x / editor.ts->tw;
     editor.ts_row = y / editor.ts->th;
     editor.ts_n = editor.ts->col * editor.ts_row + editor.ts_col;
 }
 
 static void handle_lb_press(int x, int y) {
-    struct ui_window *clicked_window = NULL;
+    struct ui *clicked_window = NULL;
 
-    if (sf_rect_iscontain(&editor.map_window->rect, x, y)) {
+    if (sf_rect_iscontain(&editor.map_window->area, x, y)) {
         /* mouse click at map area */
         clicked_window = editor.map_window;
-    } else if (sf_rect_iscontain(&editor.ts_window->rect, x, y)) {
+    } else if (sf_rect_iscontain(&editor.ts_window->area, x, y)) {
         /* mouse click at tileset area */
         clicked_window = editor.ts_window;
     }
 
     if (clicked_window && clicked_window->on_click) {
         clicked_window->on_click(clicked_window,
-                                 x - clicked_window->rect.x,
-                                 y - clicked_window->rect.y);
+                                 x - clicked_window->area.x,
+                                 y - clicked_window->area.y);
     }
 
 }
@@ -231,9 +246,15 @@ static void update(void) {
 }
 
 static void render(void) {
-    ui_window_render(editor.map_window);
-    ui_window_render(editor.ts_window);
+    glClear(GL_COLOR_BUFFER_BIT);
 
+    ui_render(editor.map_window);
+    ui_render(editor.ts_window);
+    ui_render(editor.bt_create);
+    ui_render(editor.bt_destroy);
+    ui_render(editor.bt_prev);
+    ui_render(editor.bt_next);
+    ui_render(editor.bt_save);
 }
 
 int main(int argc, char *argv[]) {
@@ -245,8 +266,6 @@ int main(int argc, char *argv[]) {
     editor_init();
 
     while (sf_window_isopen(editor.window)) {
-        glClear(GL_COLOR_BUFFER_BIT);
-
         update();
         render();
 
