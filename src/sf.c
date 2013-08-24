@@ -1,3 +1,4 @@
+#include <string.h>
 #include <unistd.h>
 
 #include <GLFW/glfw3.h>
@@ -49,7 +50,7 @@ static int change_working_directory(const char *pathname) {
     char *ptr;
 
     strncpy(path, pathname, PATH_MAX);
-    ptr = strrchr(path, '\\');
+    ptr = strrchr(path, '/');
     if (ptr == NULL) {
         return SF_OK;
     }

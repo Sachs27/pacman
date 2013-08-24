@@ -1,5 +1,7 @@
 if (WIN32)
     set(LIBS glfw3 glew32 opengl32 DevIL)
+else (WIN32)
+    set(LIBS m glfw GLEW GL IL)
 endif (WIN32)
 
 add_executable(editor editor.c map.c ui.c
