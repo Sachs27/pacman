@@ -55,10 +55,10 @@ static int change_working_directory(const char *pathname) {
         return SF_OK;
     }
     *ptr = '\0';
-    fprintf(stdout, "Current working directory: %s\n", path);
     if (chdir(path) < 0) {
         return -1;
     }
+    fprintf(stdout, "Current working directory: %s\n", path);
     return SF_OK;
 }
 
