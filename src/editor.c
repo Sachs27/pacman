@@ -15,26 +15,6 @@
 struct editor editor;
 
 
-static void on_mouse_pos(GLFWwindow *window, double xpos, double ypos) {
-    editor.mouse.x = (int) xpos;
-    editor.mouse.y = (int) ypos;
-}
-
-static void on_mouse_button(GLFWwindow *window,
-                            int button, int action, int mods) {
-    switch (button) {
-    case GLFW_MOUSE_BUTTON_1:
-        if (action == GLFW_PRESS) {
-            editor.mouse.lb.ispressed = 1;
-            editor.mouse.lb.x= editor.mouse.x;
-            editor.mouse.lb.y= editor.mouse.y;
-        } else if (action == GLFW_RELEASE) {
-            editor.mouse.lb.ispressed = 0;
-        }
-        break;
-    }
-}
-
 static void on_window_size(GLFWwindow *window, int width, int height) {
     editor.window->w = width;
     editor.window->h = height;
@@ -82,26 +62,32 @@ static void ts_window_on_click(struct ui *w, int x, int y);
 static void editor_init(void) {
     editor.window = sf_window_create("Pacman - Map Editor",
                                      EDITOR_WINDOW_W, EDITOR_WINDOW_H);
-    glfwSetMouseButtonCallback(editor.window->handle, on_mouse_button);
-    glfwSetCursorPosCallback(editor.window->handle, on_mouse_pos);
     glfwSetWindowSizeCallback(editor.window->handle, on_window_size);
 
     init_gl();
 
+    editor.im = input_manager_create(editor.window);
+    editor.uim = ui_manager_create(editor.im);
+
     editor.bt_create = ui_create(0, 0, 40, 40);
     ui_set_background(editor.bt_create, sf_texture_load("data/textures/create.png"));
+    ui_manager_add(editor.uim, &editor.bt_create);
 
     editor.bt_destroy = ui_create(40, 0, 40, 40);
     ui_set_background(editor.bt_destroy, sf_texture_load("data/textures/destroy.png"));
+    ui_manager_add(editor.uim, &editor.bt_destroy);
 
     editor.bt_prev = ui_create(80, 0, 40, 40);
     ui_set_background(editor.bt_prev, sf_texture_load("data/textures/prev.png"));
+    ui_manager_add(editor.uim, &editor.bt_prev);
 
     editor.bt_next = ui_create(120, 0, 40, 40);
     ui_set_background(editor.bt_next, sf_texture_load("data/textures/next.png"));
+    ui_manager_add(editor.uim, &editor.bt_next);
 
     editor.bt_save = ui_create(160, 0, 40, 40);
     ui_set_background(editor.bt_save, sf_texture_load("data/textures/save.png"));
+    ui_manager_add(editor.uim, &editor.bt_save);
 
     editor.map = map_create("data/maps/classic",
                             PACMAN_MAP_COL, PACMAN_MAP_ROW,
@@ -112,6 +98,7 @@ static void editor_init(void) {
                                   editor.map->row * editor.map->th);
     ui_on_render(editor.map_window, map_window_on_render);
     ui_on_click(editor.map_window, map_window_on_click);
+    ui_manager_add(editor.uim, &editor.map_window);
 
     editor.ts = editor.map->tss;
     editor.ts_window = ui_create(editor.map_window->area.x
@@ -122,6 +109,7 @@ static void editor_init(void) {
     ui_set_background(editor.ts_window, editor.map->tss->texture);
     ui_on_render(editor.ts_window, ts_window_on_render);
     ui_on_click(editor.ts_window, ts_window_on_click);
+    ui_manager_add(editor.uim, &editor.ts_window);
     editor.ts_col = 0;
     editor.ts_row = 0;
     editor.ts_n = 0;
@@ -212,50 +200,14 @@ static void ts_window_on_click(struct ui *w, int x, int y) {
     editor.ts_n = editor.ts->col * editor.ts_row + editor.ts_col;
 }
 
-static void handle_lb_press(int x, int y) {
-    struct ui *clicked_window = NULL;
-
-    if (sf_rect_iscontain(&editor.map_window->area, x, y)) {
-        /* mouse click at map area */
-        clicked_window = editor.map_window;
-    } else if (sf_rect_iscontain(&editor.ts_window->area, x, y)) {
-        /* mouse click at tileset area */
-        clicked_window = editor.ts_window;
-    }
-
-    if (clicked_window && clicked_window->on_click) {
-        clicked_window->on_click(clicked_window,
-                                 x - clicked_window->area.x,
-                                 y - clicked_window->area.y);
-    }
-
-}
-
-static void ui_update(void) {
-    static int ui_lb_ispressed = 0;
-
-    if (editor.mouse.lb.ispressed && !ui_lb_ispressed) {
-        ui_lb_ispressed = 1;
-        handle_lb_press(editor.mouse.lb.x, editor.mouse.lb.y);
-    } else if (!editor.mouse.lb.ispressed) {
-        ui_lb_ispressed = 0;
-    }
-}
-
 static void update(void) {
-    ui_update();
+    ui_manager_update(editor.uim);
 }
 
 static void render(void) {
     glClear(GL_COLOR_BUFFER_BIT);
 
-    ui_render(editor.map_window);
-    ui_render(editor.ts_window);
-    ui_render(editor.bt_create);
-    ui_render(editor.bt_destroy);
-    ui_render(editor.bt_prev);
-    ui_render(editor.bt_next);
-    ui_render(editor.bt_save);
+    ui_manager_render(editor.uim);
 }
 
 int main(int argc, char *argv[]) {

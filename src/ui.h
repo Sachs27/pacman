@@ -22,7 +22,6 @@ struct ui {
 
 
 struct ui *ui_create(int x, int y, int w, int h);
-void ui_render(struct ui *win);
 
 
 inline static void ui_set_background(struct ui *win,

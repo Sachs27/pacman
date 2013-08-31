@@ -5,18 +5,13 @@
 #include "sf_rect.h"
 #include "sf_window.h"
 #include "ui.h"
+#include "ui_manager.h"
 #include "map.h"
 
 
 #define EDITOR_WINDOW_W 800
 #define EDITOR_WINDOW_H 537
 
-
-struct mouse_button {
-    int ispressed;
-    int x;
-    int y;
-};
 
 struct editor {
     struct sf_window   *window;
@@ -36,11 +31,8 @@ struct editor {
     struct ui          *bt_next;
     struct ui          *bt_save;
 
-    struct {
-        int x;
-        int y;
-        struct mouse_button lb;
-    } mouse;
+    struct input_manager   *im;
+    struct ui_manager      *uim;
 };
 
 
