@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#if defined(__unix__)
+#if defined(__UNIX__)
 #include <linux/limits.h>
 #endif
 

@@ -46,17 +46,21 @@ static enum glfw_init_status glfw_init(void) {
 }
 
 static int change_working_directory(const char *pathname) {
+#if defined(__WIN32__)
+    static char path_seperator = '\\';
+#else
+    static char path_seperator = '/';
+#endif
     char path[PATH_MAX];
     char *ptr;
 
     strncpy(path, pathname, PATH_MAX);
-    ptr = strrchr(path, '/');
-    if (ptr == NULL) {
-        return SF_OK;
-    }
-    *ptr = '\0';
-    if (chdir(path) < 0) {
-        return -1;
+    ptr = strrchr(path, path_seperator);
+    if (ptr != NULL) {
+        *ptr = '\0';
+        if (chdir(path) < 0) {
+            return -1;
+        }
     }
     fprintf(stdout, "Current working directory: %s\n", path);
     return SF_OK;
