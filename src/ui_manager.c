@@ -14,13 +14,14 @@ struct ui_manager *ui_manager_create(struct input_manager *im) {
 }
 
 void ui_manager_update(struct ui_manager *uim) {
-    static int mb1_state = KEY_UP;
+    static int mb1_state = KEY_RELEASE;
 
-    if (uim->im->mouse.mb1.state == KEY_DOWN && mb1_state == KEY_UP) {
+    if (uim->im->mouse.mb1.state == KEY_PRESS
+        && mb1_state == KEY_RELEASE) {
         int x = uim->im->mouse.mb1.x;
         int y = uim->im->mouse.mb1.y;
 
-        mb1_state = KEY_DOWN;
+        mb1_state = KEY_PRESS;
 
         SF_LIST_BEGIN(uim->l_ui, struct ui *, ppui);
             struct ui *ui = *ppui;
@@ -28,8 +29,8 @@ void ui_manager_update(struct ui_manager *uim) {
                 ui->on_click(ui, x - ui->area.x, y - ui->area.y);
             }
         SF_LIST_END();
-    } else if (uim->im->mouse.mb1.state == KEY_UP) {
-        mb1_state = KEY_UP;
+    } else if (uim->im->mouse.mb1.state == KEY_RELEASE) {
+        mb1_state = KEY_RELEASE;
     }
 }
 

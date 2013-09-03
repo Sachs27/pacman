@@ -84,7 +84,7 @@ static void draw_base_lines(struct ui *w) {
     xmax = w->area.w;
     ymax = w->area.h;
 
-    glColor3f(0.7f, 0.7f, 0.7f);
+    glColor3f(0.3f, 0.3f, 0.3f);
     for (i = 0; i <= m->row; ++i) {
         drawline(1.0f, 0.0f, i * m->th, xmax, i * m->th);
     }
@@ -95,16 +95,19 @@ static void draw_base_lines(struct ui *w) {
 
 static void map_window_on_render(struct ui *w) {
     map_draw(editor.map, 0.0f, 0.0f);
-    draw_base_lines(w);
+    if (editor.map_is_draw_base_lines) {
+        draw_base_lines(w);
+    }
 }
 
 static void map_window_on_click(struct ui *w, int x, int y) {
-    int col, row;
+    int col, row, n;
 
     col = x / editor.map->tw;
     row = y / editor.map->th;
 
-    map_set_tile(editor.map, col, row, editor.ts_n);
+    n = editor.ts->col * editor.ts_row + editor.ts_col;
+    map_set_tile(editor.map, col, row, n);
 }
 
 static void ts_window_on_render(struct ui *w) {
@@ -121,7 +124,6 @@ static void ts_window_on_render(struct ui *w) {
 static void ts_window_on_click(struct ui *w, int x, int y) {
     editor.ts_col = x / editor.ts->tw;
     editor.ts_row = y / editor.ts->th;
-    editor.ts_n = editor.ts->col * editor.ts_row + editor.ts_col;
 }
 
 static void bt_save_on_click(struct ui *ui, int x, int y) {
@@ -164,17 +166,21 @@ static void editor_init(void) {
     ui_on_click(editor.bt_save, bt_save_on_click);
     ui_manager_add(editor.uim, &editor.bt_save);
 
-    /*editor.map = map_create("data/maps/classic",*/
-                            /*PACMAN_MAP_COL, PACMAN_MAP_ROW,*/
-                            /*PACMAN_MAP_TW, PACMAN_MAP_TH);*/
-    /*map_set_tileset(editor.map, "data/textures/walls_classic.png", 16, 16);*/
-    editor.map = map_load("data/maps/classic");
+    if (access("data/maps/classic", 0) == 0) {
+        editor.map = map_load("data/maps/classic");
+    } else {
+        editor.map = map_create("data/maps/classic",
+                                PACMAN_MAP_COL, PACMAN_MAP_ROW,
+                                PACMAN_MAP_TW, PACMAN_MAP_TH);
+        map_set_tileset(editor.map, "data/textures/walls_classic.png", 16, 16);
+    }
 
     editor.map_window = ui_create(1, 40, editor.map->col * editor.map->tw,
                                   editor.map->row * editor.map->th);
     ui_on_render(editor.map_window, map_window_on_render);
     ui_on_click(editor.map_window, map_window_on_click);
     ui_manager_add(editor.uim, &editor.map_window);
+    editor.map_is_draw_base_lines = 1;
 
     editor.ts = editor.map->ts;
     editor.ts_window = ui_create(editor.map_window->area.x
@@ -188,11 +194,35 @@ static void editor_init(void) {
     ui_manager_add(editor.uim, &editor.ts_window);
     editor.ts_col = 0;
     editor.ts_row = 0;
-    editor.ts_n = 0;
+}
 
+static void move_ts_cursor(void) {
+    if (editor.im->keys[KEY_LEFT] == KEY_PRESS && editor.ts_col > 0) {
+        editor.im->keys[KEY_LEFT] = KEY_RELEASE;
+        editor.ts_col -= 1;
+    }
+    if (editor.im->keys[KEY_RIGHT] == KEY_PRESS
+        && (editor.ts_col + 1) < editor.ts->col) {
+        editor.im->keys[KEY_RIGHT] = KEY_RELEASE;
+        editor.ts_col += 1;
+    }
+    if (editor.im->keys[KEY_UP] == KEY_PRESS && editor.ts_row > 0) {
+        editor.im->keys[KEY_UP] = KEY_RELEASE;
+        editor.ts_row -= 1;
+    }
+    if (editor.im->keys[KEY_DOWN] == KEY_PRESS
+        && editor.ts_row + 1 < editor.ts->row) {
+        editor.im->keys[KEY_DOWN] = KEY_RELEASE;
+        editor.ts_row += 1;
+    }
 }
 
 static void update(void) {
+    move_ts_cursor();
+    if (editor.im->keys[KEY_H] == KEY_PRESS) {
+        editor.im->keys[KEY_H] = KEY_RELEASE;
+        editor.map_is_draw_base_lines = !editor.map_is_draw_base_lines;
+    }
     ui_manager_update(editor.uim);
 }
 
@@ -210,7 +240,8 @@ int main(int argc, char *argv[]) {
 
     editor_init();
 
-    while (sf_window_isopen(editor.window)) {
+    while (sf_window_isopen(editor.window)
+           && editor.im->keys[KEY_ESC] == KEY_RELEASE) {
         update();
         render();
 

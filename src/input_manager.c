@@ -26,11 +26,11 @@ static void handle_mouse_button(struct input_manager *im,
     switch (button) {
     case GLFW_MOUSE_BUTTON_1:
         if (action == GLFW_PRESS) {
-            im->mouse.mb1.state = KEY_DOWN;
+            im->mouse.mb1.state = KEY_PRESS;
             im->mouse.mb1.x = im->mouse.x;
             im->mouse.mb1.y = im->mouse.y;
         } else if (action == GLFW_RELEASE) {
-            im->mouse.mb1.state = KEY_UP;
+            im->mouse.mb1.state = KEY_RELEASE;
         }
         break;
     }
@@ -41,6 +41,43 @@ static void on_mouse_button(GLFWwindow *handle,
     SF_LIST_BEGIN(l_input_manager, struct input_manager *, pim);
         if ((*pim)->win->handle == handle) {
             handle_mouse_button(*pim, button, action, mods);
+        }
+    SF_LIST_END();
+}
+
+static void handle_key(struct input_manager *im, int key, int scancode,
+                       int action, int mods) {
+    if (action == GLFW_REPEAT) {
+        return;
+    }
+
+    switch (key) {
+    case GLFW_KEY_H:
+        im->keys[KEY_H] = action;
+        break;
+    case GLFW_KEY_UP:
+        im->keys[KEY_UP] = action;
+        break;
+    case GLFW_KEY_DOWN:
+        im->keys[KEY_DOWN] = action;
+        break;
+    case GLFW_KEY_LEFT:
+        im->keys[KEY_LEFT] = action;
+        break;
+    case GLFW_KEY_RIGHT:
+        im->keys[KEY_RIGHT] = action;
+        break;
+    case GLFW_KEY_ESCAPE:
+        im->keys[KEY_ESC] = action;
+        break;
+    }
+}
+
+static void on_key(GLFWwindow *handle, int key, int scancode,
+                   int action, int mods) {
+    SF_LIST_BEGIN(l_input_manager, struct input_manager *, pim);
+        if ((*pim)->win->handle == handle) {
+            handle_key(*pim, key, scancode, action, mods);
         }
     SF_LIST_END();
 }
@@ -59,6 +96,7 @@ struct input_manager *input_manager_create(struct sf_window *win) {
 
     glfwSetMouseButtonCallback(win->handle, on_mouse_button);
     glfwSetCursorPosCallback(win->handle, on_mouse_pos);
+    glfwSetKeyCallback(win->handle, on_key);
 
     return im;
 }

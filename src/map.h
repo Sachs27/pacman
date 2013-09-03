@@ -5,6 +5,12 @@
 #include "sf_texture.h"
 
 
+#define MAP_NULL 0
+#define MAP_SMALL_DOT 18
+#define MAP_LARGE_DOT 9
+#define MAP_DOOR      27
+
+
 struct tileset {
     struct sf_texture *texture;
     char *pathname;

@@ -6,8 +6,18 @@
 
 
 enum key_state {
-    KEY_UP = 0,
-    KEY_DOWN = 1,
+    KEY_RELEASE,
+    KEY_PRESS,
+};
+
+enum key {
+    KEY_H,
+    KEY_RIGHT,
+    KEY_LEFT,
+    KEY_DOWN,
+    KEY_UP,
+    KEY_ESC,
+    NKEY,
 };
 
 struct mouse_button {
@@ -16,18 +26,13 @@ struct mouse_button {
     int y;
 };
 
-/*
-struct keyboard_key {
-    enum sf_key_state state;
-    int code;
-};
-*/
-
 struct input_manager {
     struct {
         int x, y;
         struct mouse_button mb1, mb2, mb3;
     } mouse;
+
+    enum key_state keys[NKEY];
 
     struct sf_window *win;
 };

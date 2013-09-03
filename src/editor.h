@@ -9,7 +9,7 @@
 #include "map.h"
 
 
-#define EDITOR_WINDOW_W 800
+#define EDITOR_WINDOW_W 640
 #define EDITOR_WINDOW_H 537
 
 
@@ -18,6 +18,7 @@ struct editor {
 
     struct map         *map;
     struct ui          *map_window;
+    int                 map_is_draw_base_lines;
 
     struct tileset     *ts;
     struct ui          *ts_window;
