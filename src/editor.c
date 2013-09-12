@@ -55,6 +55,7 @@ static int init_gl(void) {
 
 static void drawline(GLfloat size,
                      GLfloat xp1, GLfloat yp1, GLfloat xp2, GLfloat yp2) {
+    /*
     GLfloat r = size / 2.0f;
     GLfloat xline = xp2 - xp1;
     GLfloat yline = yp2 - yp1;
@@ -75,6 +76,13 @@ static void drawline(GLfloat size,
     glEnd();
 
     glPopMatrix();
+    */
+
+    glLineWidth(size);
+    glBegin(GL_LINES);
+        glVertex2f(xp1, yp1);
+        glVertex2f(xp2, yp2);
+    glEnd();
 }
 
 static void draw_base_lines(struct ui *w) {
