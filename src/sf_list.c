@@ -25,7 +25,7 @@ struct sf_list *sf_list_create(size_t size) {
     l = malloc(sizeof(*l) + sizeof(*(l->head)));
 
     l->size = size;
-    l->nelt = 0;
+    l->nelts = 0;
     l->head->prev = l->head;
     l->head->next = l->head;
 
@@ -35,14 +35,14 @@ struct sf_list *sf_list_create(size_t size) {
 void sf_list_destroy(struct sf_list *l, sf_list_destructor_t *destructor) {
     struct sf_list_node *node;
 
-    while (l->nelt) {
+    while (l->nelts) {
         node = l->head->next;
         if (destructor) {
             destructor(node->elt);
         }
         remove_node(node);
         free(node);
-        --l->nelt;
+        --l->nelts;
     }
     free(l);
 }
@@ -62,7 +62,7 @@ void sf_list_push(struct sf_list * l, void *elt) {
 
     insert_node(l->head->prev, node, l->head);
 
-    ++l->nelt;
+    ++l->nelts;
 }
 
 void sf_list_push_front(struct sf_list * l, void *elt) {
@@ -80,14 +80,14 @@ void sf_list_push_front(struct sf_list * l, void *elt) {
 
     insert_node(l->head, node, l->head->next);
 
-    ++l->nelt;
+    ++l->nelts;
 }
 
 void sf_list_pop(struct sf_list * l, void *o_elt) {
     struct sf_list_node *node = l->head->prev;
 
     remove_node(node);
-    --l->nelt;
+    --l->nelts;
 
     if (o_elt) {
         memcpy(o_elt, node->elt, l->size);
@@ -99,7 +99,7 @@ void sf_list_pop_front(struct sf_list * l, void *o_elt) {
     struct sf_list_node *node = l->head->next;
 
     remove_node(node);
-    --l->nelt;
+    --l->nelts;
 
     if (o_elt) {
         memcpy(o_elt, node->elt, l->size);

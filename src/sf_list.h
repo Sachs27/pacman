@@ -18,7 +18,7 @@ struct sf_list_node {
 
 struct sf_list {
     size_t                  size;   /* element's size in bytes */
-    uint32_t                nelt;
+    uint32_t                nelts;
     struct sf_list_node     head[];
 };
 
